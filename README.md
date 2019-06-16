@@ -1,1 +1,9 @@
-# Radzevich_project_monkey_balance
+What is it?
+-----------
+  Детская компьютерная игра для изучения счета. 
+  Задача уровнять весы с кубиками и цифрами на разных чашах.
+Contacts
+--------
+  Andrei Radzevich
+  andrei.radz86@gmail.com
+  
