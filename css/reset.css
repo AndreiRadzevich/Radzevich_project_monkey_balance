@@ -13,10 +13,16 @@ a {
   cursor: pointer;
 }
 ul{
-	padding: 0;
+  padding: 0;
 }
 
 li {
-	list-style: none;
+  list-style: none;
 
+}
+input{
+  padding: 0;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
 }
