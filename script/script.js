@@ -1,23 +1,24 @@
-//main start
-function ready() {
-	var buttOne = document.getElementById('level_1');
-	var buttTwo = document.getElementById('level_2');
-	var buttThr = document.getElementById('level_3');
-	var leftField = document.getElementById('field__left');
-	var rightField = document.getElementById('field__right');
-	var numContainer = document.getElementById('container-number');
-	var banContainer = document.getElementById('container-banana');
-	var stick = document.getElementById('stick');
-	var stepBanContain = 0;
-	var stepNumContain = 0;
-	var control = 0;
-	buttOne.addEventListener('click', fillField, false);
-	buttTwo.addEventListener('click', fillField, false);
-	buttThr.addEventListener('click', fillField, false);
+"use strict"
 
-	function fillField(EO) {
-		EO = EO || window.event;
-		var level = parseInt(EO.target.id.substr(-1, 1));
+function ready() {
+	const leftField = document.getElementById('field__left'); //левое игровое поле с цифрами
+	const rightField = document.getElementById('field__right'); //правое игровое поле с бананами
+	const numContainer = document.getElementById('container-number'); //левая чаша весов для цифр
+	const banContainer = document.getElementById('container-banana'); //правая чаша весов для бананов
+	const stick = document.getElementById('stick'); //перекладина весов
+	const balance = document.getElementById('back'); // весы
+	let control = 0; // для контроля всех добавлений и удалений элементов на весах
+	/** Выбор уровня */
+	document.getElementById('level_1').addEventListener('click', fillField, false);
+	document.getElementById('level_2').addEventListener('click', fillField, false);
+	document.getElementById('level_3').addEventListener('click', fillField, false);
+	/**
+	 * Определяет нажатую кнопку; делает запрос к серверу.
+	 * @param e Cобытие 'click', используется для идентификации кнопки.
+	 */
+	function fillField(e) {
+		e = e || window.event;
+		let level = parseInt(e.target.id.substr(-1, 1));
 
 		$.ajax({
 			url: ajaxHandlerScript,
@@ -28,316 +29,370 @@ function ready() {
 				f: 'READ',
 				n: stringName
 			},
-			success: loadSVG,
+			success: loadSvg,
 			error: errorHandler,
 		});
-
-		function loadSVG(data) {
-			if (data.error != undefined)
-				alert(data.error);
-			else if (data.result != "") {
-				var arrSVG = JSON.parse(data.result);
-			}
+		/**
+		 * Обрабатывает данные (svg-элементы) с сервера и заполняет поля цифр и бананов
+		 * в зависимости от нажатой кнопки (выбранного уровня)
+		 * @param response {JSON} данные загруженные с сервера; response.result - массив с svg-элементами
+		 */
+		function loadSvg(response) {
+			/** Содержимое игровых полей */
 			var leftFieldElem = '';
 			var rightFieldElem = '';
-			for (var i = 1; i <= level * 3; i++) {
-				leftFieldElem += arrSVG[i];
-				rightFieldElem += arrSVG[0];
-			}
-			leftField.innerHTML = leftFieldElem;
-			rightField.innerHTML = rightFieldElem;
-			banContainer.innerHTML = "";
-			numContainer.innerHTML = "";
-			for (var j = 0; j < 9; j++) {
-				if (j < 2) {
-					getBox(numContainer);
-				}
-				getBox(banContainer);
-			}
-
-			function getStyleLeft(dragObject, index) {
-				dragObject.style.bottom = index;
-				if (j == 0 || j == 3 || j == 6) dragObject.style.left = "1vw";
-				if (j == 1 || j == 4 || j == 7) dragObject.style.left = "6.5vw";
-				if (j == 2 || j == 5 || j == 8) dragObject.style.left = "12vw";
-			}
-
-			function getBox(contain) {
-				var box = document.createElement('div');
-				box.className = 'box';
-				box.style.position = 'absolute';
-				if (j < 3) {
-					getStyleLeft(box, "6vw");
-				} else if (3 <= j && j < 6) {
-					getStyleLeft(box, "11.5vw");
-				} else if (6 <= j && j < 9) {
-					getStyleLeft(box, "17vw");
-				};
-				contain.insertBefore(box, contain.firstChild);
-			}
-			stepBanContain = 0;
-			stepNumContain = 0;
+			/** Обнуление состояния чаш и перекладины весов, глаз обезьяны*/
 			control = 0;
 			numContainer.style.transform = 'translateY(0vw) translateZ(0)';
 			banContainer.style.transform = 'translateY(0vw) translateZ(0)';
 			stick.style.transform = 'rotate(0deg) translateZ(0)';
+			balance.style.background = "url(images/monkey_close.png) center no-repeat";
+			balance.style.backgroundSize = "contain";
+
+			if (response.error != undefined) {
+				alert(response.error);
+			} else if (response.result != "") {
+				var arrSvg = JSON.parse(response.result);
+			}
+
+			for (let i = 1; i <= level * 3; i++) {
+				leftFieldElem += arrSvg[i];
+				rightFieldElem += arrSvg[0];
+			}
+
+			leftField.innerHTML = leftFieldElem;
+			rightField.innerHTML = rightFieldElem;
+			banContainer.innerHTML = "";
+			numContainer.innerHTML = "";
+
+			for (let j = 0; j < 9; j++) {
+				if (j < 2) {
+					getBox(j, numContainer);
+				}
+				getBox(j, banContainer);
+			}
 		}
+	}
 
-		banContainer.addEventListener('mousedown', bananaOutStart, false);
-		banContainer.addEventListener('touchstart', bananaOutStart, false);
-		numContainer.addEventListener('mousedown', numberOutStart, false);
-		numContainer.addEventListener('touchstart', numberOutStart, false);
-		rightField.addEventListener('mousedown', bananaStart, false);
-		rightField.addEventListener('touchstart', bananaStart, false);
-		leftField.addEventListener('mousedown', numberStart, false);
-		leftField.addEventListener('touchstart', numberStart, false);
-	} //end of loadSVG
+	var number = new DragObject(numContainer, banContainer, leftField, balance);
+	var banana = new DragObject(banContainer, numContainer, rightField, balance);
 
-	function numberStart(e) { //drag number
-		var dragObject = e.target.closest('svg') || e.targetTouches[0].target.closest('svg');
-		dragObject.style.cssText += 'position:relative;top: 0; left: 0; z-index:999; width: 5.5vw;height:5.5vw;';
-		var dragObjectId = parseInt(dragObject.getAttribute('id').slice(-1));
-		var posX = e.pageX; //start posX
-		var posY = e.pageY;
-		e.preventDefault();
-		window.addEventListener('mousemove', numberMove, false);
-		window.addEventListener('touchmove', numberMove, false);
-
-		function numberMove(e) {
+	banContainer.addEventListener('mousedown', banana.dragOut, false);
+	banContainer.addEventListener('touchstart', banana.dragOut, false);
+	numContainer.addEventListener('mousedown', number.dragOut, false);
+	numContainer.addEventListener('touchstart', number.dragOut, false);
+	rightField.addEventListener('mousedown', banana.dragIn, false);
+	rightField.addEventListener('touchstart', banana.dragIn, false);
+	leftField.addEventListener('mousedown', number.dragIn, false);
+	leftField.addEventListener('touchstart', number.dragIn, false);
+	/**
+	 * Создает экземпляр DragObject.
+	 *
+	 * @param {object} boxBalance1 - Контейнер(чаша весов), куда перетаскиваются элементы.
+	 * @param {object} boxBalance2 - Вторая чаша весов.
+	 * @param {object} boxField - Поле, откуда перетаскиваются элементы.
+	 * @param {object} balance - Тело весов, для закрытия открытия глаз.
+	 */
+	function DragObject(boxBalance1, boxBalance2, boxField, balance) {
+		let self = this;
+		self.boxBalance1 = boxBalance1;
+		self.boxBalance2 = boxBalance2;
+		self.boxField = boxField;
+		/** для идентификации (цифра или банан) */
+		self.ind = boxBalance1.id.slice(-6);
+		self.balance = balance;
+		let posX;
+		let posY;
+		/** перетаскиваемый объект */
+		let dragObject;
+		let dragObjectId;
+		/**
+		 * Выполняется при нажатии на перетаскиваемый в чашу весов элемент
+		 *
+		 */
+		self.dragIn = function (e) {
+			e = e || e.changedTouches[0] || window.event;
+			dragObject = e.target.closest('svg');
 			e.preventDefault();
-			var dx = e.pageX - posX;
-			var dy = e.pageY - posY;
+
+			if (dragObject) {
+				dragObject.style.cssText += 'position:relative; top:0; left:0; z-index:99;';
+				posX = e.pageX;
+				posY = e.pageY;
+
+				window.addEventListener('mousemove', self.move, false);
+				window.addEventListener('touchmove', self.move, false);
+			}
+
+			window.addEventListener('mouseup', self.dropIn, false);
+			window.addEventListener('touchend', self.dropIn, false);
+		};
+		/**
+		 * Выполняется при перетаскивании нажатого элемента
+		 *
+		 */
+		self.move = function (e) {
+			e.preventDefault();
+			let dx = e.pageX - posX;
+			let dy = e.pageY - posY;
+
 			dragObject.style.left = dx + "px";
 			dragObject.style.top = dy + "px";
-		}
-		window.addEventListener('mouseup', numberEnd, false);
-		window.addEventListener('touchend', numberEnd, false);
-		function numberEnd(e) {
-			var elemPosCont = getElementPos(numContainer);
-			var banWidthX = elemPosCont.left + numContainer.offsetWidth;
-			var banHeightY = elemPosCont.top + numContainer.offsetHeight;
-			var container = numContainer.getElementsByTagName('div');
-			var point = 0;
-			e = e || e.changedTouches[0];
+		};
+		/**
+		 * Выполняется при отпускании перетаскиваемого элемента на весы
+		 *
+		 */
+		self.dropIn = function (e) {
+			e = e || e.changedTouches[0] || window.event;
 			e.preventDefault();
-			window.removeEventListener('mousemove', numberMove, false);
-			window.removeEventListener('touchmove', numberMove, false);
+			/** объект с координатами left, top контейнера, куда надо тащить элемент*/
+			const elemPosCont = getElementPos(self.boxBalance1);
+			const banWidthX = elemPosCont.left + self.boxBalance1.offsetWidth;
+			const banHeightY = elemPosCont.top + self.boxBalance1.offsetHeight;
+			/** набор контейнеров для вставки перетаскиваемого элемента */
+			const container = self.boxBalance1.getElementsByTagName('div');
+
+			window.removeEventListener('mousemove', self.move, false);
+			window.removeEventListener('touchmove', self.move, false);
+
 			if (dragObject) {
-				var posEndX = e.clientX || e.changedTouches[0].clientX;
-				var posEndY = e.clientY || e.changedTouches[0].clientY;
-				if (posEndY > elemPosCont.top && posEndY < banHeightY && posEndX > elemPosCont.left && posEndX < banWidthX) {
-					dragObject.style.position = "static";
-					Array.prototype.forEach.call(container, function (testElement) {
-						if (!testElement.hasChildNodes()) {
-							point++;
-							if (point == 1) control += dragObjectId;
-							if (control > 9) {
-								dragObject.style.left = '';
-								dragObject.style.top = '';
-								control -= dragObjectId;
-							} else {
+				let posEndX = e.clientX || e.changedTouches[0].clientX;
+				let posEndY = e.clientY || e.changedTouches[0].clientY;
+
+				dragObject.style.position = "static";
+				/** если объект затащили в границы соответствующего контейнера проверяются условия  */
+				/**  его вставки или он возвращается в первоначальное положение  */
+				if (posEndY > elemPosCont.top && posEndY < banHeightY && posEndX >
+					elemPosCont.left && posEndX < banWidthX) {
+					/**  если тащится банан  */
+					if (self.ind === 'banana') {
+						Array.from(container, function (testElement, i) {
+							if (i === 0) control--;
+
+							if (!testElement.hasChildNodes()) {
 								testElement.appendChild(dragObject);
-								numContainer.style.transform = `translateY(${(stepNumContain + dragObjectId)}vw) translateZ(0)`;
-								banContainer.style.transform = `translateY(${(stepBanContain - dragObjectId)}vw) translateZ(0)`;
-								stick.style.transform = `rotate(${(-(stepNumContain + dragObjectId)) * 2}deg) translateZ(0)`
+							}
+						});
+						/**  условие опускания чаш и поворота перекладины весов  */
+						if (self.ind === 'banana') {
+							self.setTransform(self.boxBalance2, self.boxBalance1);
+						} else {
+							self.setTransform(self.boxBalance1, self.boxBalance2);
+						}
+						/**  условие открывания глаз обезьяны */
+						self.toggleFace();
+						/**  если тащится цифра  */
+					} else {
+						dragObjectId = parseInt(dragObject.getAttribute('id').slice(-1));
+
+						for (let i = 0; i < container.length; i++) {
+
+							if (!container[i].hasChildNodes()) {
+								control += dragObjectId;
+								dragObject.style.position = "static";
+								container[i].appendChild(dragObject);
+								/**  условие опускания чаш и поворота перекладины весов  */
+								if (self.ind === 'banana') {
+									self.setTransform(self.boxBalance2, self.boxBalance1);
+								} else {
+									self.setTransform(self.boxBalance1, self.boxBalance2);
+								}
+								/**  условие открывания глаз обезьяны */
+								self.toggleFace();
+								break;
 							}
 						}
-					});
-					stepNumContain = parseInt(getTranslateY(numContainer));
-					stepBanContain = parseInt(getTranslateY(banContainer));
+					}
+					/**  если элемент нельзя добавить */
 				} else {
 					dragObject.style.left = '';
 					dragObject.style.top = '';
 				}
 				dragObject = null;
 			}
-			window.removeEventListener('mouseup', numberEnd, false);
-			window.removeEventListener('touchend', numberEnd, false);
-		}
-	}
 
-	function numberOutStart(e) { //drag out number
-		var dragObject = e.target.closest('svg') || e.targetTouches[0].target.closest('svg');
-		var dragObjectId = parseInt(dragObject.getAttribute('id').slice(-1));
-		dragObject.style.cssText += 'position:relative; top: 0; left: 0;  z-index:99;';
-		var posX = e.pageX; //start posX
-		var posY = e.pageY;
-		e.preventDefault();
-		window.addEventListener('mousemove', moveOut, false);
-		window.addEventListener('touchmove', moveOut, false);
-		window.addEventListener('mouseup', numberOutEnd, false);
-		window.addEventListener('touchend', numberOutEnd, false);
-		function numberOutEnd(e) {
-			var elemPosCont = getElementPos(leftField);
-			var numWidthX = elemPosCont.left + leftField.offsetWidth;
-			var numHeightY = elemPosCont.top + leftField.offsetHeight;
-			e = e || e.changedTouches[0];
+			window.removeEventListener('mouseup', self.dropIn, false);
+			window.removeEventListener('touchend', self.dropIn, false);
+		};
+		/**
+		 * Выполняется при нажатии на перетаскиваемый из чаши весов элемент
+		 *
+		 */
+		self.dragOut = function (e) {
+			e = e || e.changedTouches[0] || window.event;
 			e.preventDefault();
-			window.removeEventListener('mousemove', moveOut, false);
-			window.removeEventListener('touchmove', moveOut, false);
+			dragObject = e.target.closest('svg');
+
 			if (dragObject) {
-				var posEndX = e.clientX || e.changedTouches[0].clientX;
-				var posEndY = e.clientY || e.changedTouches[0].clientY;
-				if (posEndY > elemPosCont.top && posEndY < numHeightY && posEndX > elemPosCont.left && posEndX < numWidthX) {
-					var container = document.getElementsByClassName('number');
-					control -= dragObjectId;
-					console.log(control);
-					Array.prototype.forEach.call(container, function (testElement) {
-						var conteinerClass = parseInt(testElement.getAttribute('class').slice(-1));
-						if (conteinerClass == dragObjectId) {
-							dragObject.style.position = "static";
-							testElement.appendChild(dragObject);
-						}
-					});
-					numContainer.style.transform = `translateY(${(stepNumContain - dragObjectId)}vw) translateZ(0)`;
-					banContainer.style.transform = `translateY(${(stepBanContain + dragObjectId)}vw) translateZ(0)`;
-					stick.style.transform = `rotate(${(-(stepNumContain - dragObjectId)) * 2}deg) translateZ(0)`;
-					stepNumContain = parseInt(getTranslateY(numContainer));
-					stepBanContain = parseInt(getTranslateY(banContainer));
-				} else {
-					dragObject.style.left = '';
-					dragObject.style.top = '';
-				}
-				dragObject = null;
-			}
-			window.removeEventListener('mouseup', numberOutEnd, false);
-			window.removeEventListener('touchend', numberOutEnd, false);
-		}
-	}
+				dragObject.style.cssText += 'position:relative; top:0; left:0; z-index:99;';
+				posX = e.pageX;
+				posY = e.pageY;
 
-	function bananaStart(e) { //drag banana
-		var dragObject = e.target.closest('svg') || e.targetTouches[0].target.closest('svg');
-		dragObject.style.cssText += 'position:relative; top: 0; left: 0; z-index:99;';
-		var posX = e.pageX; //start posX
-		var posY = e.pageY;
-		e.preventDefault();
-		window.addEventListener('mousemove', bananaMove, false);
-		window.addEventListener('touchmove', bananaMove, false);
-		function bananaMove(e) {
+				window.addEventListener('mousemove', self.move, false);
+				window.addEventListener('touchmove', self.move, false);
+				window.addEventListener('mouseup', self.dropOut, false);
+				window.addEventListener('touchend', self.dropOut, false);
+			}
+		};
+		/**
+		 * Выполняется при отпускании перетаскиваемого элемента вне весов
+		 *
+		 */
+		self.dropOut = function (e) {
+			e = e || e.changedTouches[0] || window.event;
 			e.preventDefault();
-			var dx = e.pageX - posX;
-			var dy = e.pageY - posY;
-			dragObject.style.left = dx + "px";
-			dragObject.style.top = dy + "px";
-		}
-		window.addEventListener('mouseup', bananaEnd, false);
-		window.addEventListener('touchend', bananaEnd, false);
-		function bananaEnd(e) {
-			var elemPosCont = getElementPos(banContainer);
-			var banWidthX = elemPosCont.left + banContainer.offsetWidth;
-			var banHeightY = elemPosCont.top + banContainer.offsetHeight;
-			var container = banContainer.getElementsByTagName('div');
-			e = e || e.changedTouches[0];
-			e.preventDefault();
-			window.removeEventListener('mousemove', bananaMove, false);
-			window.removeEventListener('touchmove', bananaMove, false);
+			/** объект с координатами left, top контейнера, куда надо тащить элемент*/
+			const elemPosCont = getElementPos(self.boxField);
+			const numWidthX = elemPosCont.left + self.boxField.offsetWidth;
+			const numHeightY = elemPosCont.top + self.boxField.offsetHeight;
+
+			window.removeEventListener('mousemove', self.move, false);
+			window.removeEventListener('touchmove', self.move, false);
+
 			if (dragObject) {
-				var posEndX = e.clientX || e.changedTouches[0].clientX;
-				var posEndY = e.clientY || e.changedTouches[0].clientY;
-				if (posEndY > elemPosCont.top && posEndY < banHeightY && posEndX > elemPosCont.left && posEndX < banWidthX) {
-					Array.from(container, function (testElement) {
-						if (!testElement.hasChildNodes()) {
-							dragObject.style.position = "static";
-							testElement.appendChild(dragObject);
-						}
-					});
+				let posEndX = e.clientX || e.changedTouches[0].clientX;
+				let posEndY = e.clientY || e.changedTouches[0].clientY;
+				const container = document.getElementsByClassName(self.ind);
+				/** если объект затащили в границы соответствующего контейнера проверяются условия  */
+				/**  его вставки или он возвращается в первоначальное положение  */
+				if (posEndY > elemPosCont.top && posEndY < numHeightY && posEndX >
+					elemPosCont.left && posEndX < numWidthX) {
+					/**  если тащится банан  */
+					if (self.ind === 'banana') {
+						Array.from(container, function (testElement, i) {
 
-					numContainer.style.transform = `translateY(${(stepNumContain - 1)}vw) translateZ(0)`;
-					banContainer.style.transform = `translateY(${(stepBanContain + 1)}vw) translateZ(0)`;
-					stick.style.transform = `rotate(${((stepBanContain + 1)) * 2}deg) translateZ(0)`;
-					stepNumContain = parseInt(getTranslateY(numContainer));
-					stepBanContain = parseInt(getTranslateY(banContainer));
+							if (i === 0) control++;
+							if (!testElement.hasChildNodes()) {
+								dragObject.style.position = "static";
+								testElement.appendChild(dragObject);
+							}
+						});
+						/**  условие опускания чаш и поворота перекладины весов  */
+						if (self.ind === 'banana') {
+							self.setTransform(self.boxBalance2, self.boxBalance1);
+						} else {
+							self.setTransform(self.boxBalance1, self.boxBalance2);
+						}
+						/**  условие открывания глаз обезьяны */
+						if ([].some.call(container, (el => !el.hasChildNodes()))) {
+							self.toggleFace();
+						} else if (control != 0) {
+							self.toggleFace();
+						}
+						/**  если тащится цифра  */
+					} else {
+						dragObjectId = parseInt(dragObject.getAttribute('id').slice(-1));
+						Array.from(container, function (testElement) {
+							const containerClass = parseInt(testElement.getAttribute('class').slice(-1));
+
+							if (containerClass === dragObjectId) {
+								dragObject.style.position = "static";
+								testElement.appendChild(dragObject);
+								control -= dragObjectId;
+							}
+						});
+						/**  условие опускания чаш и поворота перекладины весов  */
+						if (self.ind === 'banana') {
+							self.setTransform(self.boxBalance2, self.boxBalance1);
+						} else {
+							self.setTransform(self.boxBalance1, self.boxBalance2);
+						}
+						/**  условие открывания глаз обезьяны */
+						if ([].some.call(container, (el => !el.hasChildNodes()))) {
+							self.toggleFace();
+						} else if (control !== 0) {
+							self.toggleFace();
+						}
+					}
+					/**  если элемент нельзя добавить */
 				} else {
 					dragObject.style.left = '';
 					dragObject.style.top = '';
 				}
 				dragObject = null;
 			}
-			window.removeEventListener('mouseup', bananaEnd, false);
-			window.removeEventListener('touchend', bananaEnd, false);
-		}
-	}
 
-	function bananaOutStart(e) { //drag out banana
-		var dragObject = e.target.closest('svg') || e.targetTouches[0].target.closest('svg');
-		dragObject.style.cssText += 'position:relative;top: 0; left: 0;  z-index:99;';
-		var posX = e.pageX; //start posX
-		var posY = e.pageY;
-		e.preventDefault();
-		window.addEventListener('mousemove', moveOut, false);
-		window.addEventListener('touchmove', moveOut, false);
-		window.addEventListener('mouseup', bananaOutEnd, false);
-		window.addEventListener('touchend', bananaOutEnd, false);
-		function bananaOutEnd(e) {
-			var elemPosCont = getElementPos(rightField);
-			var banWidthX = elemPosCont.left + rightField.offsetWidth;
-			var banHeightY = elemPosCont.top + rightField.offsetHeight;
-			var container = document.getElementsByClassName('banana');
-			e = e || e.changedTouches[0];
-			e.preventDefault();
-			window.removeEventListener('mousemove', moveOut, false);
-			window.removeEventListener('touchmove', moveOut, false);
-			if (dragObject) {
-				var posEndX = e.clientX || e.changedTouches[0].clientX;
-				var posEndY = e.clientY || e.changedTouches[0].clientY;
-				if (posEndY > elemPosCont.top && posEndY < banHeightY && posEndX > elemPosCont.left && posEndX < banWidthX) {
-					Array.from(container, function (testElement) {
-						if (!testElement.hasChildNodes()) {
-							dragObject.style.position = "static";
-							testElement.appendChild(dragObject);
-						}
-					});
-					numContainer.style.transform = `translateY(${(stepNumContain + 1)}vw) translateZ(0)`;
-					banContainer.style.transform = `translateY(${(stepBanContain - 1)}vw) translateZ(0)`;
-					stick.style.transform = `rotate(${((stepBanContain - 1)) * 2}deg) translateZ(0)`;
-					stepNumContain = parseInt(getTranslateY(numContainer));
-					stepBanContain = parseInt(getTranslateY(banContainer));
-				} else {
-					dragObject.style.left = '';
-					dragObject.style.top = '';
-				}
-				dragObject = null;
+			window.removeEventListener('mouseup', self.dropOut, false);
+			window.removeEventListener('touchend', self.dropOut, false);
+		};
+		/**
+		 * Проверяет условие открытия и закрытия глаз
+		 *
+		 */
+		self.toggleFace = function () {
+			if (control === 0) {
+				self.balance.style.background = "url(images/monkey_open.png) center no-repeat";
+				self.balance.style.backgroundSize = "contain";
+
+			} else {
+				self.balance.style.background = "url(images/monkey_close.png) center no-repeat";
+				self.balance.style.backgroundSize = "contain";
 			}
-			window.removeEventListener('mouseup', bananaOutEnd, false);
-			window.removeEventListener('touchend', bananaOutEnd, false);
+		};
+		/**
+		 * Поворачивает перекладину весов и изменяет положение чаш весов
+		 * @param {object} boxLeft - Левый контейнеров весов.
+		 * @param {object} boxRight - Правый контейнеров весов.
+		 */
+		self.setTransform = function (boxLeft, boxRight) {
+			boxLeft.style.transform = `translateY(${( control > 9 ) ? 9 : control}vw) translateZ(0)`;
+			boxRight.style.transform = `translateY(${( -control < -9 ) ? -9 : -control}vw) translateZ(0)`;
+			stick.style.transform = `rotate(${( -control * 2 < -18 ) ? -18 : -control * 2}deg) translateZ(0)`;
 		}
 	}
-//common functions
+	//Вспомогательные функции
+	/**
+	 * Находит top, left элемента
+	 * @param  elem DOM-елемент
+	 * @return Объект с координатами
+	 */
 	function getElementPos(elem) {
-		var x = 0;
-		var y = 0;
+		let x = 0;
+		let y = 0;
+
 		while (elem) {
 			x += elem.offsetLeft;
 			y += elem.offsetTop;
 			elem = elem.offsetParent;
 		}
+
 		return {
 			left: x,
 			top: y
-		}
-	}
-
-	function getTranslateY(obj) {
-		var style = obj.style,
-			transform = style.transform || style.webkitTransform || style.mozTransform;
-		if (transform.indexOf("-") !== -1) {
-			transform = transform.replace('-', '');
-			var zT = transform.match(/translateY\(([0-9]+(px|em|%|ex|ch|rem|vh|vw|vmin|vmax|mm|cm|in|pt|pc))\)/);
-			zT[1] = "-" + zT[1];
-			return zT[1];
 		};
-		var zT = transform.match(/translateY\(([0-9]+(px|em|%|ex|ch|rem|vh|vw|vmin|vmax|mm|cm|in|pt|pc))\)/);
-		if (!zT) {
-			return '0';
-		}
-		return zT[1] ? zT[1] : '0';
-		//Return the value AS STRING (with the unit)
 	}
-	function moveOut(e) {
-		e.preventDefault();
-		var dx = e.pageX - posX;
-		var dy = e.pageY - posY;
-		dragObject.style.left = dx + "px";
-		dragObject.style.top = dy + "px";
+	/**
+	 * Расставляет элементы (устанавливает bottom и left) в одном ряду игрового поля
+	 * @param {number} index Порядковый номер элемента
+	 * @param {object} element DOM-елемент
+	 * @param {string} pos Первый, второй или третий ряд элементов
+	 */
+	function getStyleLeft(index, element, pos) {
+		element.style.bottom = pos;
+
+		if (index == 0 || index == 3 || index == 6) element.style.left = "1vw";
+		if (index == 1 || index == 4 || index == 7) element.style.left = "6.5vw";
+		if (index == 2 || index == 5 || index == 8) element.style.left = "12vw";
+	}
+	/**
+	 * Подготавливает и вставляет контейнеры для каждого банана и цифры
+	 * @param {number} index Порядковый номер элемента
+	 * @param {object} contain Контейнер левой или правой чаши весов
+	 */
+	function getBox(index, contain) {
+		let box = document.createElement('div');
+		box.className = 'box';
+		box.style.position = 'absolute';
+
+		if (index < 3) {
+			getStyleLeft(index, box, "6vw");
+		} else if (3 <= index && index < 6) {
+			getStyleLeft(index, box, "11.5vw");
+		} else if (6 <= index && index < 9) {
+			getStyleLeft(index, box, "17vw");
+		}
+
+		contain.insertBefore(box, contain.firstChild);
 	}
 }

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>MonkeyBalance</title>
+	<meta property="og:title" content="MonkeyBalance" />
+	<meta name="author" content="Andrei_Radzevich">
+	<meta property=“og:description” content=“Game_for_childer_(3-5_years_old)” />
+	<meta property="og:locale" content="ru_BY" />
+	<meta property="og:locale:alternate" content="ru_RU">
+	<link rel="shortcut icon" href="images/fav.ico" type="image/x-icon">
+	<link rel="stylesheet" href="css/styles.css">
+	<script src='jquery-3.4.1/jquery-3.4.1.min.js'></script>
+	<script type="text/javascript" src="script/script_for_AJAX.js"></script>
+	<script type="text/javascript" src="script/script.js"></script>
+</head>
+
+<body>
+	<main id="container">
+	</main>
+	<footer class="main-list">
+		<div class="btn-start" onclick="switchToGamePage()">
+		</div>
+		<ul class="list">
+			<li><input class="btn btn1" type="button" onclick="switchToAboutPage()"></li>
+			<li><input class="btn btn2" type="button" onclick="switchToRulesPage()"></li>
+		</ul>
+	</footer>
+	<script>
+		window.onhashchange = switchToStateFromURLHash; //при изменении закладки(якоря,хэша)
+		var SPAStateH = {};
+		var myAudio = new Audio("audio/music.mp3");
+		myAudio.loop = true;
+
+		function switchToStateFromURLHash() {
+			var URLHash = window.location.hash; //закладка(якорь, хэш)
+			var StateJSON = decodeURIComponent(URLHash.substr(1)); //получаем якорь
+
+			if (StateJSON != "")
+				updateToState(StateJSON); // если JSON непустой, читаем из него состояние и отображаем
+
+			else
+				updateToState('main'); // иначе показываем главную страницу
+		}
+
+		function updateToState(NewStateH) {
+			SPAStateH = NewStateH; // устанавливаем - это теперь текущее состояние
+			var pageHTML = "";
+
+			switch (SPAStateH) {
+				case 'main':
+					pageHTML += "<div class='main'>";
+					pageHTML += "<div class='logo'></div>";
+					pageHTML += "</div>"
+					break;
+				case 'game':
+					pageHTML += "<header class='header'><div class='header__left'>";
+					pageHTML += "<input id='level_1' class='left-item left-item1' type='button'>";
+					pageHTML += "<input id='level_2' class='left-item left-item2' type='button'>";
+					pageHTML += "<input id='level_3' class='left-item left-item3' type='button'>";
+					pageHTML +=
+						"</div><div class='header__right'><input class='right-item' type='button' onclick='switchToMainPage()'></div>";
+					pageHTML += "</header><section id='field'><div id='field__left'></div><div id='balance'>";
+					pageHTML +=
+						"<div id='balance__left'><div id='container-number'></div></div><div id='stick'></div><div id='back'></div><div id='balance__right'>";
+					pageHTML += "<div id='container-banana'></div></div></div><div id='field__right'>";
+					pageHTML += "</div></div><section>";
+					break;
+				case 'about':
+					pageHTML += "<header class='header'><div class='header__left'>";
+					pageHTML += "</div><div class='header__right'><input class='right-item' type='button' onclick='switchToMainPage()'></div></header>";
+					pageHTML += "<div id='rules'><span>Торговая марка Amy&Benton </span></div>";
+					break;
+				case 'rules':
+					pageHTML += "<header class='header'><div class='header__left'>";
+					pageHTML += "</div><div class='header__right'><input class='right-item' type='button' onclick='switchToMainPage()'></div></header>";
+					pageHTML += "<div id='rules'><span>Задача игры- изучение цифр и развитие у ребенка навыков счета.<br> Цель игры – уровнять чаши весов.<br> На одну чашу";
+					pageHTML += " кладут цифры, при этом на чашу одновременно можно положить только две цифры. Подразумевается, что три и более";
+					pageHTML += " цифры ребенку складывать еще проблематично. Бананы можно положить все имеющиеся. Предлагается три уровня сложности.<br>";
+					pageHTML += "Предполагаемое развитие игры:<br>";
+					pageHTML += "Взрослый кладет на левые весы бананы и просит ребенка положить соответствующую цифру на правую чашу весов. ";
+					pageHTML += "Посложнее ситуация: лежат бананы и какая-нибудь цифра -ребенку нужно правильно сделать сложение и добавить на левую чашу весов";
+					pageHTML += " правильную цифру.</span></div>";
+					break;
+			}
+
+			document.getElementById('container').innerHTML = pageHTML;
+
+			if (SPAStateH != 'main') {
+				document.querySelector('.main-list').style.display = 'none'; //скрываем меню во время игры
+
+			} else {
+				document.querySelector('.main-list').style.display = '';
+			}
+
+			if (SPAStateH == 'game') {
+				$('body').css({
+					'background': 'url(images/fon2.jpg) center no-repeat',
+					'background-size': 'cover'
+				});
+				ready();
+			}
+		}
+
+		function switchToMainPage() {
+			switchToState({ pagename: 'main' });
+
+			$('body').css({
+				'background': 'url(images/fon1.jpg) center no-repeat',
+				'background-size': 'cover'
+			});
+
+			myAudio.pause();
+			myAudio.currentTime = 0.0;
+		}
+
+		function switchToGamePage() {
+			switchToState({ pagename: 'game' });
+
+			$('body').css({
+				'background': 'url(images/fon2.jpg) center no-repeat',
+				'background-size': 'cover'
+			});
+
+			myAudio.play();
+		}
+
+		function switchToAboutPage() {
+			switchToState({ pagename: 'about' });
+		}
+
+		function switchToRulesPage() {
+			switchToState({ pagename: 'rules' });
+		}
+
+		function switchToState(NewStateH) {
+			location.hash = encodeURIComponent(NewStateH.pagename);
+		}
+		// переключаемся в состояние, которое сейчас прописано в закладке УРЛ
+		switchToStateFromURLHash();
+	</script>
+</body>
+
+</html>

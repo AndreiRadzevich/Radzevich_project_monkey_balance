@@ -1,12 +1,12 @@
 @import url(./reset.css);
-@import url(./theme.css);
 
 body {
 	background: url(../images/fon1.jpg) center no-repeat;
 	height: 100vh;
 	width: 100vw;
 	background-position: bottom;
-	background-size: cover ;
+	background-size: cover;
+	font-size: 1rem;
 }
 
 .logo {
@@ -16,10 +16,11 @@ body {
 	margin: auto;
 	background-size: contain;
 }
-.btn-start:hover {
-transform: scale(0.97);
 
+.btn-start:hover {
+	transform: scale(0.97);
 }
+
 .main {
 	text-align: center;
 	padding-top: 10vh;
@@ -31,7 +32,7 @@ transform: scale(0.97);
 	height: 18vh;
 	margin: auto;
 	background-size: contain;
-	transition: all 0.5s; 
+	transition: all 0.5s;
 }
 
 .main-list {
@@ -54,14 +55,15 @@ transform: scale(0.97);
 	height: 5vh;
 	border: none;
 	font-size: 3vh;
-	background: url(../images/main_button.png) center no-repeat;
 	border-radius: 4px;
 	transition: all 0.2s;
 }
+
 .btn1 {
 	background: url(../images/options.png) center no-repeat;
 	background-size: contain;
 }
+
 .btn2 {
 	background: url(../images/rules.png) center no-repeat;
 	background-size: contain;
@@ -73,8 +75,9 @@ input:hover {
 
 .header {
 	position: relative;
-	padding: 20px 20px;
-	margin-bottom: 5vh;
+	padding: 10px 20px;
+	padding-bottom: 40px;
+	margin-bottom: 8vh;
 }
 
 .header__left {
@@ -115,46 +118,55 @@ input:hover {
 	width: 20vw;
 	height: 60vh;
 	position: relative;
-	}
+}
 
 .number {
 	width: 5.5vw;
 	height: 5.5vw;
 	position: absolute;
 }
-.number1{
-top: 0;
-left: 0;
+
+.number1 {
+	top: 0;
+	left: 0;
 }
-.number2{
+
+.number2 {
 	top: 0;
 	left: 30%;
-	}
-.number3{
+}
+
+.number3 {
 	top: 0;
 	left: 60%;
 }
-.number4{
+
+.number4 {
 	top: 30%;
 	left: 0;
 }
-.number5{
+
+.number5 {
 	top: 30%;
 	left: 30%;
 }
-.number6{
+
+.number6 {
 	top: 30%;
 	left: 60%;
 }
-.number7{
+
+.number7 {
 	top: 60%;
 	left: 0;
 }
-.number8{
+
+.number8 {
 	top: 60%;
 	left: 30%;
 }
-.number9{
+
+.number9 {
 	top: 60%;
 	left: 60%;
 }
@@ -174,29 +186,34 @@ left: 0;
 }
 
 #balance {
-	width: 70vw;
-	height: 70vh;
+	width: 65vw;
+	height: 65vh;
 	position: relative;
 }
 
-#level_1{
+#level_1 {
 	background: url(../images/level1.png) center no-repeat;
 	background-size: cover;
-
 }
-#level_2{
+
+#level_2 {
 	background: url(../images/level2.png) center no-repeat;
 	background-size: cover;
 }
-#level_3{
+
+#level_3 {
 	background: url(../images/level3.png) center no-repeat;
 	background-size: cover;
+}
+
+svg {
+	width: 5.5vw;
+	height: 5.5vw;
 }
 
 #balance__left {
 	width: 20vw;
 	height: 45vh;
-
 	position: absolute;
 	left: 0px;
 	top: 0px;
@@ -206,8 +223,7 @@ left: 0;
 
 #balance__right {
 	width: 20vw;
-	height: 45vh;
-
+	height: 50vh;
 	position: absolute;
 	right: 0px;
 	top: 0px;
@@ -222,7 +238,7 @@ left: 0;
 	background: url(../images/balance_fon.png) center no-repeat;
 	background-size: contain;
 	transform: translateY(1px);
-	transition: all cubic-bezier(.06,1.46,.74,1.5) 0.4s;
+	transition: all cubic-bezier(.12, 1.12, .46, 1.36) 0.4s;
 	z-index: 99;
 }
 
@@ -233,31 +249,41 @@ left: 0;
 	background: url(../images/balance_fon.png) center no-repeat;
 	background-size: contain;
 	transform: translateY(1px);
-	transition: all cubic-bezier(.06,1.46,.74,1.5) 0.4s;
+	transition: all cubic-bezier(.12, 1.12, .46, 1.36) 0.4s;
 	z-index: 99;
 }
-#back{
-	background: url(../images/monkey_open.png) center no-repeat;
+
+#back {
+	background: url(../images/monkey_close.png) center no-repeat, url(../images/monkey_open.png) center no-repeat;
 	background-size: contain;
 	position: absolute;
 	width: 100%;
 	height: 100%;
 	left: 0;
-	top:0;
+	top: 0;
 	z-index: 1;
 }
 
-#stick{
+#stick {
 	z-index: 0;
 	width: 80%;
 	height: 10%;
 	border-radius: 50%;
 	background: #9b5e27;
-transition: all cubic-bezier(.06,1.46,.74,1.5) 0.4s;
-position: absolute;
-left: 10%;
-top:63%;
-} 
+	transition: all cubic-bezier(.06, 1.46, .74, 1.5) 0.4s;
+	position: absolute;
+	left: 10%;
+	top: 63%;
+}
+
+#rules {
+	font-weight: bold;
+	text-align: center;
+	font-size: 1em;
+	margin: 0 auto;
+	width: 50vw;
+	height: 45vh;
+}
 
 @media screen and (orientation: landscape) and (max-width: 820px) {
 	.logo {
@@ -293,4 +319,10 @@ top:63%;
 		min-height: 40px;
 	}
 
+	#rules {
+		font-size: 0.7em;
+		margin: 0 auto;
+		width: 50vw;
+		height: 45vh;
+	}
 }
